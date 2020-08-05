@@ -12,7 +12,7 @@ namespace RomanFramework
         public int Number
         {
             get { return _number; }
-            private set { _number = value; }
+            private set { _number = value % 4000; }
         }
 
         private String _numerals;
@@ -53,16 +53,14 @@ namespace RomanFramework
             }
             else
             {
-                if (IsValidRomanNumber(number))
-                {
-                    Numerals = IntToRoman(number);
-                }
+                Numerals = IntToRoman(Number);
             }
         }
 
         public RomanNumber(String romanString, bool useOldConverter = false)
         {
-            if (!Regex.Match(romanString, "^(nulla)|(M{0,3})(CM|CD|D?C{0,3})(XC|XL|L?X{0,3})(IX|IV|V?I{0,3})$").Success)
+            romanString = romanString.ToUpper();
+            if (!Regex.Match(romanString, "^((nulla)|(M{0,3})(CM|CD|D?C{0,3})(XC|XL|L?X{0,3})(IX|IV|V?I{0,3}))$").Success)
             {
                 throw new Exception($"Invalid roman number format: {romanString}\n");
             }
@@ -70,17 +68,18 @@ namespace RomanFramework
             Number = useOldConverter ? RomanToIntOld(romanString) : RomanToInt(romanString);
         }
 
-        public static bool IsValidRomanNumber(int number)
+        /*private int ParseRomanNumber(int number)
         {
-            if (number >= 4000 || number < 0)
+            if (number >= 4000)
             {
-                //throw new Exception($"Number({number}) is not in range [0..3999] for roman number creation\n");
-                return false;
+                Console.WriteLine($"Number({number}) is too big too convert to Roman. Returning {number} modulo 4000.\n");
+                Number = number % 4000;
+                return Number;
             }
-            return true;
-        }
+            return number;
+        }*/
 
-        private String IntToRoman(int number)
+        private static String IntToRoman(int number)
         {
             if (number == 0)
             {
@@ -100,10 +99,9 @@ namespace RomanFramework
             return result;
         }
 
-        private int RomanToInt(String romanNumber)
+        private static int RomanToInt(String romanNumber)
         {
             int result = 0;
-            //int[] list = new int[12];\
             if (romanNumber[0] == 'n')
             {
                 return 0;
@@ -112,9 +110,10 @@ namespace RomanFramework
             {
                 if (NumeralsValueDict[romanNumber[i]].Item2 % 2 == 0 && NumeralsValueDict[romanNumber[i]].Item2 > 0)
                 {
-                    if (i != romanNumber.Length - 1 && NumeralsValueDict[romanNumber[i + 1]].Item2 > NumeralsValueDict[romanNumber[i]].Item2)
+                    if (i != romanNumber.Length - 1 && NumeralsValueDict[romanNumber[i + 1]].Item2 < NumeralsValueDict[romanNumber[i]].Item2)
                     {
                         result += NumeralsValueDict[romanNumber[i + 1]].Item1 - NumeralsValueDict[romanNumber[i]].Item1;
+                        i++;
                     }
                     else
                     {
@@ -139,6 +138,39 @@ namespace RomanFramework
             return result;
         }
 
+        public override string ToString()
+        {
+            return $"{Number}({Numerals})";
+        }
 
+        public static RomanNumber operator +(RomanNumber num1, RomanNumber num2)
+        {
+            return new RomanNumber(num1.Number + num2.Number);
+        }
+
+        public static RomanNumber operator -(RomanNumber num1, RomanNumber num2)
+        {
+            return new RomanNumber(num1.Number - num2.Number);
+        }
+
+        public static RomanNumber operator *(RomanNumber num1, RomanNumber num2)
+        {
+            return new RomanNumber(num1.Number * num2.Number);
+        }
+
+        public static RomanNumber operator /(RomanNumber num1, RomanNumber num2)
+        {
+            return new RomanNumber(num1.Number / num2.Number);
+        }
+
+        public static bool operator ==(RomanNumber num1, RomanNumber num2)
+        {
+            return (num1.Number == num2.Number);
+        }
+
+        public static bool operator !=(RomanNumber num1, RomanNumber num2)
+        {
+            return (num1.Number != num2.Number);
+        }
     }
 }
